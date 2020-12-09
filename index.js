@@ -20,6 +20,7 @@ async function inital_check(){
     let client  = await mongoClient.connect(mongodb_url);
     let collection = client.db("guvi_DailyTask(DT)_12-05-2020").collection('topics');
     let result = await collection.ensureIndex({"topic":"text", "content": "text", "category": "text"})
+    client.close();
 }
 
 
@@ -35,6 +36,7 @@ app.post("/create_user", async (req, res)=>{
         let collection = client.db("guvi_DailyTask(DT)_12-05-2020").collection('users');
         let result = await collection.find({"email": data["email"]}).toArray();
         if(result.length != 0){
+            client.close();
             return res.status(400).json({"detail": "User Already Exist"})
         }
         let response = await collection.insertOne(data);
@@ -55,6 +57,7 @@ app.post("/login", async (req, res)=>{
         let client  = await mongoClient.connect(mongodb_url);
         let collection = client.db("guvi_DailyTask(DT)_12-05-2020").collection('users');
         let result = await collection.find({"email": data["email"]}).toArray();
+        client.close();
         if(result.length == 0){
             return res.status(401).json({"detail": "User Not Register"});
         }
@@ -62,7 +65,6 @@ app.post("/login", async (req, res)=>{
         if(!isValid){
             return res.status(401).json({"detail": "Invalid Credentials"});
         }
-        client.close();
         let token = await jwt.sign({"user_id": result[0]["_id"], "role": result[0]["role"], "email": result[0]["email"]}, process.env.CODE, {expiresIn: "1h"})
         if(token)
             return res.status(200).json({"detail": "Success", "token": token})
@@ -79,6 +81,7 @@ app.get("/check_status", Authorize ,async (req, res)=>{
         let client  = await mongoClient.connect(mongodb_url);
         let collection = client.db("guvi_DailyTask(DT)_12-05-2020").collection('users');
         let result = await collection.find({"_id": req.body["user_id"]}).toArray();
+        client.close();
         if(result.length == 0){
             return res.status(401).json({"detail": "User Not Register"});
         }
@@ -259,6 +262,7 @@ app.put("/edit_reply", Edit_check, async (req, res)=>{
         let client  = await mongoClient.connect(mongodb_url);
         let collection = client.db("guvi_DailyTask(DT)_12-05-2020").collection('replies');
         let response = await collection.findOneAndUpdate({"_id": object_id(data["id"])},{$set:{"content": data["content"], "modified": new Date()}});
+        client.close();
         if(!response['lastErrorObject']['updatedExisting']){
             return res.status(500).json({"detail": "Something Went Wrong"})
         }
@@ -276,6 +280,7 @@ app.delete("/delete_reply", Delete_check, async (req, res)=>{
         let client  = await mongoClient.connect(mongodb_url);
         let collection = client.db("guvi_DailyTask(DT)_12-05-2020").collection('replies');
         let response = await collection.deleteOne({"_id": object_id(data["id"])});
+        client.close();
         if(response['deletedCount'] != 1){
             return res.status(500).json({"detail": "Something Went Wrong"})
         }

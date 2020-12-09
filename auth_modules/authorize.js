@@ -27,6 +27,7 @@ async function Edit_check(req, res, next){
             let client  = await mongoClient.connect(mongodb_url);
             let collection = client.db("guvi_DailyTask(DT)_12-05-2020").collection('replies');
             let result = await collection.find({"_id": object_id(req.body["id"])}).toArray();
+            client.close();
             if(result.length == 0 || String(result[0]["user_id"]) != valid["user_id"]){
                 return res.status(403).json({"detail": "You doesn't enough Pemissions, You can only edit your replies"})
             }
@@ -49,6 +50,7 @@ async function Delete_check(req, res, next){
             let client  = await mongoClient.connect(mongodb_url);
             let collection = client.db("guvi_DailyTask(DT)_12-05-2020").collection('replies');
             let result = await collection.find({"_id": object_id(req.body["id"])}).toArray();
+            client.close();
             if(result.length == 0 || String(result[0]["user_id"]) != valid["user_id"] || valid["role"] != "ADMIN"){
                 return res.status(403).json({"detail": "You have to be admin user, Not enough permissions"})
             }
